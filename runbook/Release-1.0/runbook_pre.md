@@ -3,7 +3,7 @@
 This document outlines the steps that are required to be run once in each environment we are deploying to.
 
 1. Do Step 1
-   
+   cbfb commit 2
 
       | Environment  | UserName                        | Email                    | 
       |--------------|---------------------------------|--------------------------|
