@@ -4,7 +4,7 @@ This document outlines the steps that are required to be run once in each enviro
 
 1. Do Step 1
    cbfb commit 2
-
+commit 3
       | Environment  | UserName                        | Email                    | 
       |--------------|---------------------------------|--------------------------|
       | ST           |                                 |                          | 
