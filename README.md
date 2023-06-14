@@ -15,7 +15,7 @@ This project is using a scratch org development model. In order to contribute yo
 
 For this you will need to be authenticated to a Dev Hub org - this is typically the Production Org
 
-- Authenticate to  DevHub (Production Org)
+- Authenticate to the devhub  DevHub (Production Org)
 
     You need to perform this step only once
    ```
