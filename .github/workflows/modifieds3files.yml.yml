@@ -1,50 +1,71 @@
-# DX@Scale CI/CD Template for GitHub
-#----------------------------------------------------------------------------------------------------
-# Maintained by @aly76 for DX@Scale
-# Follows reference pipeline available at docs.dxatscale.io
-# 
-#-----------------------------------------------------------------------------------------------------
-# To know more about dxatscale, visit https://docs.dxatscale.io
-# To know more on sfpowerscripts, visit- https://sfpowerscripts.dxatscale.io/
-# To know more on sfpowerkit, visit- https://github.com/Accenture/sfpowerkit
+name: testing modified s3test files
 
-# Return an used scratch org back to the pool for replenishment
-
-name: 'Scratch Org Recycler - User Triggered'
-
-on:
-  workflow_dispatch:
-    inputs:
-      username:
-        description: "Username of the scratch org"
-        required: true
-
-
-
-#Set the environment variables for tracking metrics
-#env:
-  #SFPOWERSCRIPTS_NEWRELIC: 'true'
-  #SFPOWERSCRIPTS_NEWRELIC_API_KEY: '${{ secrets.NEWRELIC_INSIGHT_INSERT_KEYS }}'
-  #SFPOWERSCRIPTS_DATADOG: 'true'
-  #SFPOWERSCRIPTS_DATADOG_HOST: '${{ secrets.DATADOG_HOST }}'
-  #SFPOWERSCRIPTS_DATADOG_API_KEY: '${{ secrets.DATADOG_API_KEY }}'
-
-
+on: 
+  push:
+    branches: devtest # Need to modify (changing staging branch for testing)
 
 jobs:
-
-  delete-scracthorg:
-    name: 'Return a used scratch org to the pool ${{ github.event.inputs.username }}'
+  upload:
     runs-on: ubuntu-latest
-    container: ghcr.io/dxatscale/sfpowerscripts
-
     steps:
 
+      - name: Checkout Repository devtest Branch
+        id: checkout
+        uses: actions/checkout@v3
+        
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: 'eu-west-1'
 
-      - name: 'Authenticate Dev Hub'
+      - name: get the modified list of files
+        shell: bash
         run: |
-          echo "${{ secrets.DEVHUB_SFDX_AUTH_URL }}" > ./authfile
-          sfdx auth:sfdxurl:store -f authfile -a devhub
+          pwd
+          ls
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch
+          echo $GITHUB_SHA
+          git show --pretty="format:" --name-only $GITHUB_SHA > modifiedfiles     
+          done <modifiedfiles
+          aws s3 sync . s3://${{ secrets.S3_BUCKET_NAME }} --follow-symlinks          
+#         git_hash=$(git rev-parse --short "$GITHUB_SHA")
+#         aws s3 sync ./$uploadfile s3://${{ secrets.AWS_STAGING_BUCKET }} --follow-symlinks
 
-      - name: 'Delete scratch org ${{ github.event.inputs.username }}'
-        run: 'sfdx sfpowerscripts:pool:org:delete -u ${{ github.event.inputs.username }} -v devhub'
+#      - name: Checkout Repository test Branch
+#        uses: actions/checkout@v3
+#        with:
+#          ref: test
+
+#      - name: sync files to s3 
+#        run: |
+#          pwd
+#          ls -ltr
+#          while read line; do
+#            line=$(echo $line | sed 's/\(.*\),/\1 /')
+#            echo -n "$line"
+#          aws s3 sync $line s3://${{ secrets.AWS_STAGING_BUCKET }} --follow-symlinks
+#          done <changedfile
+#          aws s3 sync . s3://${{ secrets.AWS_STAGING_BUCKET }}
+#        env:
+#          S3SyncedFiles: ${{ steps.modified-files.outputs.stdout }}     
+
+
+      #- name: Upload to s3
+      #  uses: hkusu/s3-upload-action@v2
+      #  with:
+      #    aws-access-key-id: ${{ secrets.AWS_KEY_ID }}
+      #    aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #    aws-region: 'eu-west-1'
+      #    aws-bucket: ${{ secrets.AWS_BUCKET }}
+      #    file-path: './'
+
+      #- name: Upload to s3
+      #  uses: shallwefootball/s3-upload-action@master
+      #  with:
+      #    aws_key_id: ${{ secrets.AWS_KEY_ID }}
+      #    aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+      #    aws_bucket: ${{ secrets.AWS_BUCKET }}
+      #    source_dir: ''
